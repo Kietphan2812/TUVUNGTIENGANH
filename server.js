@@ -32,8 +32,14 @@ if (process.env.DATABASE_URL) {
           time_spent VARCHAR(50),
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
+        CREATE TABLE IF NOT EXISTS vocabularies (
+          id SERIAL PRIMARY KEY,
+          word VARCHAR(100) NOT NULL,
+          meaning VARCHAR(255) NOT NULL,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
       `);
-      console.log('✅ Đã kết nối Neon PostgreSQL thành công và sẵn sàng bảng quiz_results!');
+      console.log('✅ Đã kết nối Neon PostgreSQL thành công và sẵn sàng các bảng dữ liệu!');
     } catch (err) {
       console.error('❌ Lỗi kết nối Neon PostgreSQL:', err.message);
     }
@@ -52,6 +58,52 @@ app.get('/api/health', async (req, res) => {
     res.json({ status: 'ok', database: 'connected', time: dbRes.rows[0].current_time });
   } catch (err) {
     res.status(500).json({ status: 'error', error: err.message });
+  }
+});
+
+// API thêm từ vựng mới vào Neon SQL
+app.post('/api/vocabularies', async (req, res) => {
+  const { word, meaning } = req.body;
+
+  if (!word || !meaning || !word.trim() || !meaning.trim()) {
+    return res.status(400).json({ success: false, message: 'Vui lòng nhập cả từ tiếng Anh và nghĩa tiếng Việt' });
+  }
+
+  if (!pool) {
+    return res.status(500).json({ success: false, message: 'Cơ sở dữ liệu chưa được cấu hình' });
+  }
+
+  try {
+    const result = await pool.query(
+      `INSERT INTO vocabularies (word, meaning)
+       VALUES ($1, $2)
+       RETURNING id, word, meaning, created_at;`,
+      [word.trim(), meaning.trim()]
+    );
+
+    res.json({
+      success: true,
+      message: 'Đã thêm từ vựng vào Neon PostgreSQL thành công!',
+      data: result.rows[0]
+    });
+  } catch (err) {
+    console.error('Lỗi khi lưu từ vựng:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// API lấy danh sách từ vựng từ Neon SQL
+app.get('/api/vocabularies', async (req, res) => {
+  if (!pool) {
+    return res.status(500).json({ success: false, message: 'Cơ sở dữ liệu chưa được cấu hình' });
+  }
+  try {
+    const result = await pool.query(
+      'SELECT id, word, meaning, created_at FROM vocabularies ORDER BY id DESC;'
+    );
+    res.json({ success: true, data: result.rows });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
   }
 });
 

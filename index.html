@@ -62,7 +62,17 @@
       font-weight: 800;
     }
 
+    .header-action-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
     .timer-bar {
+      flex: 1;
+      min-width: 200px;
       background: var(--yellow);
       color: #1b2432;
       font-weight: 700;
@@ -74,6 +84,191 @@
       justify-content: center;
       gap: 6px;
     }
+
+    .add-vocab-btn {
+      background: var(--pink);
+      color: #fff;
+      border: 2px solid rgba(255, 255, 255, 0.25);
+      border-radius: 8px;
+      padding: 10px 16px;
+      font-size: 0.92rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .add-vocab-btn:hover {
+      background: var(--pink-dark);
+      transform: translateY(-1px);
+      box-shadow: 0 5px 12px rgba(182, 87, 154, 0.4);
+    }
+
+    /* Modal Thêm từ vựng */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(10, 16, 26, 0.82);
+      backdrop-filter: blur(5px);
+      -webkit-backdrop-filter: blur(5px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 16px;
+      animation: modalFadeIn 0.2s ease;
+    }
+
+    @keyframes modalFadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .modal-card {
+      background: var(--navy-2);
+      border: 2px solid var(--yellow);
+      border-radius: 14px;
+      width: 100%;
+      max-width: 440px;
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6);
+      overflow: hidden;
+      animation: modalSlideDown 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes modalSlideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.96);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .modal-header {
+      background: var(--navy);
+      padding: 14px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .modal-header h3 {
+      margin: 0;
+      color: var(--yellow);
+      font-size: 1.05rem;
+      letter-spacing: 0.5px;
+      font-weight: 800;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 1.6rem;
+      cursor: pointer;
+      line-height: 1;
+      opacity: 0.8;
+      padding: 0 4px;
+    }
+
+    .modal-close:hover {
+      opacity: 1;
+      color: var(--yellow);
+    }
+
+    .modal-body {
+      padding: 18px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      text-align: left;
+    }
+
+    .form-group label {
+      color: var(--muted);
+      font-size: 0.88rem;
+      font-weight: 600;
+    }
+
+    .form-group input {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 11px 14px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1.5px solid rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      color: #fff;
+      font-size: 0.98rem;
+      font-family: inherit;
+      transition: all 0.2s ease;
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: var(--yellow);
+      background: rgba(255, 255, 255, 0.12);
+      box-shadow: 0 0 0 2px rgba(244, 197, 49, 0.25);
+    }
+
+    .modal-msg {
+      font-size: 0.88rem;
+      min-height: 20px;
+      text-align: center;
+      transition: all 0.2s ease;
+    }
+
+    .modal-footer {
+      padding: 12px 20px 18px;
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+
+    .btn-save-vocab {
+      background: var(--yellow);
+      color: #1b2432;
+      font-weight: 800;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.92rem;
+      transition: transform 0.1s ease, filter 0.15s ease;
+    }
+
+    .btn-save-vocab:hover {
+      filter: brightness(1.08);
+      transform: translateY(-1px);
+    }
+
+    .btn-cancel-vocab {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 10px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    .btn-cancel-vocab:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+
 
     .progress-wrap {
       padding: 10px 20px 0;
@@ -272,10 +467,39 @@
 
 <body>
   <div id="snow-layer"></div>
+
+  <!-- Modal Thêm từ vựng -->
+  <div id="addModal" class="modal-overlay" style="display: none;">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>✨ THÊM TỪ VỰNG MỚI</h3>
+        <button class="modal-close" id="closeModalBtn" aria-label="Đóng">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="enWordInput">Từ tiếng Anh:</label>
+          <input type="text" id="enWordInput" placeholder="Ví dụ: Gorgeous, Brilliant..." autocomplete="off" />
+        </div>
+        <div class="form-group">
+          <label for="viMeaningInput">Nghĩa tiếng Việt:</label>
+          <input type="text" id="viMeaningInput" placeholder="Ví dụ: Quyến rũ, lộng lẫy..." autocomplete="off" />
+        </div>
+        <div id="modalMsg" class="modal-msg"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="saveVocabBtn" class="btn-save-vocab">Lưu từ vựng</button>
+        <button type="button" id="cancelModalBtn" class="btn-cancel-vocab">Hủy</button>
+      </div>
+    </div>
+  </div>
+
   <div id="app">
     <header>
       <h1>CHỦ NHẬT TIỆC VỜI NÍ NHỈ</h1>
-      <div class="timer-bar">⏱ Thời gian cho ní chiến đấu: <span id="timer">10:00</span></div>
+      <div class="header-action-row">
+        <div class="timer-bar">⏱ Thời gian cho ní chiến đấu: <span id="timer">10:00</span></div>
+        <button id="openAddModalBtn" class="add-vocab-btn" title="Thêm từ vựng mới">➕ Thêm từ vựng</button>
+      </div>
     </header>
     <div class="progress-wrap">
       <div class="progress-track">
@@ -642,6 +866,147 @@
     // Thử phát ngay (sẽ thành công nếu trình duyệt cho phép)
     bgMusic.play().then(() => { musicStarted = true; }).catch(() => { });
     // ──────────────────────────────────────────────────────────────
+
+    // ── Thao tác thêm từ vựng mới & CSDL ─────────────────────────
+    const openAddModalBtn = document.getElementById('openAddModalBtn');
+    const addModal = document.getElementById('addModal');
+    const closeModalBtn = document.getElementById('closeModalBtn');
+    const cancelModalBtn = document.getElementById('cancelModalBtn');
+    const saveVocabBtn = document.getElementById('saveVocabBtn');
+    const enWordInput = document.getElementById('enWordInput');
+    const viMeaningInput = document.getElementById('viMeaningInput');
+    const modalMsg = document.getElementById('modalMsg');
+
+    function showAddModal() {
+      addModal.style.display = 'flex';
+      modalMsg.textContent = '';
+      enWordInput.value = '';
+      viMeaningInput.value = '';
+      setTimeout(() => enWordInput.focus(), 100);
+    }
+
+    function hideAddModal() {
+      addModal.style.display = 'none';
+    }
+
+    openAddModalBtn.addEventListener('click', showAddModal);
+    closeModalBtn.addEventListener('click', hideAddModal);
+    cancelModalBtn.addEventListener('click', hideAddModal);
+    addModal.addEventListener('click', (e) => {
+      if (e.target === addModal) hideAddModal();
+    });
+
+    function createQuestionForWord(enWord, viMeaning) {
+      const allMeanings = BASE_QUESTIONS.map(q => q.options[q.correct]);
+      const distractors = shuffleArray(allMeanings.filter(m => m.toLowerCase() !== viMeaning.toLowerCase())).slice(0, 3);
+      const options = shuffleArray([viMeaning, ...distractors]);
+      const correct = options.indexOf(viMeaning);
+      return { word: enWord, options, correct };
+    }
+
+    async function handleSaveVocab() {
+      const enWord = enWordInput.value.trim();
+      const viMeaning = viMeaningInput.value.trim();
+
+      if (!enWord || !viMeaning) {
+        modalMsg.style.color = '#d9534f';
+        modalMsg.textContent = '⚠ Vui lòng nhập cả từ tiếng Anh và nghĩa tiếng Việt!';
+        return;
+      }
+
+      saveVocabBtn.disabled = true;
+      saveVocabBtn.textContent = 'Đang lưu...';
+
+      // Tạo câu hỏi và thêm ngay vào đề thi
+      const newQ = createQuestionForWord(enWord, viMeaning);
+      MEANING_TO_WORD[viMeaning] = enWord;
+      BASE_QUESTIONS.unshift(newQ);
+      QUESTIONS.unshift(newQ);
+      answers.unshift(null);
+
+      scoreLabel.textContent = 'Điểm: ' + grade() + '/' + QUESTIONS.length;
+      updateProgress();
+      render();
+
+      // Lưu vào localStorage
+      try {
+        const localList = JSON.parse(localStorage.getItem('custom_vocabularies') || '[]');
+        localList.unshift({ word: enWord, meaning: viMeaning });
+        localStorage.setItem('custom_vocabularies', JSON.stringify(localList));
+      } catch (e) {}
+
+      // Lưu vào Neon SQL backend nếu có kết nối
+      try {
+        await fetch('/api/vocabularies', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ word: enWord, meaning: viMeaning })
+        });
+      } catch (e) {}
+
+      modalMsg.style.color = '#3fae5a';
+      modalMsg.innerHTML = '✔ Đã thêm từ "<strong>' + enWord + '</strong>" vào bài học và CSDL!';
+
+      saveVocabBtn.disabled = false;
+      saveVocabBtn.textContent = 'Lưu từ vựng';
+      enWordInput.value = '';
+      viMeaningInput.value = '';
+
+      setTimeout(() => {
+        hideAddModal();
+      }, 1000);
+    }
+
+    saveVocabBtn.addEventListener('click', handleSaveVocab);
+    enWordInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') viMeaningInput.focus();
+    });
+    viMeaningInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') handleSaveVocab();
+    });
+
+    // Tự động tải từ vựng đã lưu từ Neon SQL hoặc localStorage khi mở trang
+    async function loadSavedVocabularies() {
+      let savedItems = [];
+      try {
+        const local = JSON.parse(localStorage.getItem('custom_vocabularies') || '[]');
+        savedItems = local;
+      } catch (e) {}
+
+      try {
+        const res = await fetch('/api/vocabularies');
+        if (res.ok) {
+          const json = await res.json();
+          if (json.success && Array.isArray(json.data)) {
+            json.data.forEach(item => {
+              if (!savedItems.some(s => s.word.toLowerCase() === item.word.toLowerCase())) {
+                savedItems.push(item);
+              }
+            });
+          }
+        }
+      } catch (e) {}
+
+      if (savedItems.length > 0) {
+        let added = false;
+        savedItems.forEach(v => {
+          if (!BASE_QUESTIONS.some(q => q.word.toLowerCase() === v.word.toLowerCase())) {
+            const newQ = createQuestionForWord(v.word, v.meaning);
+            BASE_QUESTIONS.unshift(newQ);
+            MEANING_TO_WORD[v.meaning] = v.word;
+            added = true;
+          }
+        });
+        if (added) {
+          QUESTIONS = buildShuffledQuestions();
+          answers = new Array(QUESTIONS.length).fill(null);
+          scoreLabel.textContent = 'Điểm: 0/' + QUESTIONS.length;
+          updateProgress();
+          render();
+        }
+      }
+    }
+    loadSavedVocabularies();
 
     render();
     updateProgress();
