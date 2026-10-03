@@ -358,6 +358,129 @@
       40% { transform: scale(1); }
     }
 
+    /* Nút thêm nhạc & Modal nhạc */
+    .music-action-btn {
+      background: var(--navy-2);
+      color: var(--yellow);
+      border: 2px solid var(--yellow);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 0.92rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.25);
+    }
+
+    .music-action-btn:hover {
+      background: rgba(244, 197, 49, 0.18);
+      transform: translateY(-1px);
+      box-shadow: 0 5px 12px rgba(244, 197, 49, 0.35);
+    }
+
+    .music-action-btn.playing {
+      animation: musicPulse 2.5s infinite ease-in-out;
+    }
+
+    @keyframes musicPulse {
+      0%, 100% { border-color: var(--yellow); box-shadow: 0 0 8px rgba(244, 197, 49, 0.3); }
+      50% { border-color: #fff; box-shadow: 0 0 16px rgba(244, 197, 49, 0.7); }
+    }
+
+    .music-now-playing {
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(244, 197, 49, 0.4);
+      border-radius: 8px;
+      padding: 10px 12px;
+      text-align: left;
+    }
+
+    .music-status-label {
+      font-size: 0.76rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+
+    .music-track-title {
+      font-size: 0.95rem;
+      color: var(--yellow);
+      font-weight: 700;
+      margin-top: 3px;
+      word-break: break-all;
+    }
+
+    .file-upload-input {
+      color: #fff;
+      font-size: 0.85rem;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 8px 10px;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      cursor: pointer;
+      box-sizing: border-box;
+      width: 100%;
+    }
+
+    .file-upload-input::file-selector-button {
+      background: var(--yellow);
+      color: #1b2432;
+      font-weight: 700;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-right: 10px;
+      transition: filter 0.15s ease;
+    }
+
+    .file-upload-input::file-selector-button:hover {
+      filter: brightness(1.1);
+    }
+
+    .btn-small-apply {
+      background: var(--yellow);
+      color: #1b2432;
+      font-weight: 700;
+      border: none;
+      padding: 0 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: filter 0.15s ease;
+    }
+
+    .btn-small-apply:hover {
+      filter: brightness(1.1);
+    }
+
+    .volume-slider {
+      width: 100%;
+      accent-color: var(--yellow);
+      cursor: pointer;
+      height: 6px;
+    }
+
+    .btn-play-pause {
+      background: var(--pink);
+      color: #fff;
+      font-weight: 700;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .btn-play-pause:hover {
+      background: var(--pink-dark);
+    }
+
+
 
     .progress-wrap {
       padding: 10px 20px 0;
@@ -590,12 +713,54 @@
     </div>
   </div>
 
+  <!-- Modal Thêm & Điều khiển Nhạc -->
+  <div id="musicModal" class="modal-overlay" style="display: none;">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>🎵 THÊM & CÀI ĐẶT NHẠC NỀN</h3>
+        <button class="modal-close" id="closeMusicModalBtn" aria-label="Đóng">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="music-now-playing">
+          <div class="music-status-label">Trạng thái phát nhạc:</div>
+          <div id="currentTrackName" class="music-track-title">🎶 nhac1.mp3 (Đang phát)</div>
+        </div>
+
+        <div class="form-group">
+          <label for="musicFileInput">📁 Tải file nhạc từ máy tính (.mp3, .wav, .m4a, .ogg):</label>
+          <input type="file" id="musicFileInput" accept="audio/*" class="file-upload-input" />
+        </div>
+
+        <div class="form-group">
+          <label for="musicUrlInput">🔗 Hoặc dán link bài hát online (URL):</label>
+          <div style="display: flex; gap: 8px;">
+            <input type="url" id="musicUrlInput" placeholder="Ví dụ: https://.../baihat.mp3" autocomplete="off" />
+            <button type="button" id="applyUrlBtn" class="btn-small-apply">Áp dụng</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="volumeSlider">🔊 Âm lượng: <span id="volumeValue">35%</span></label>
+          <input type="range" id="volumeSlider" min="0" max="100" value="35" class="volume-slider" />
+        </div>
+
+        <div id="musicMsg" class="modal-msg"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="togglePlayBtn" class="btn-play-pause">⏸ Tạm dừng</button>
+        <button type="button" id="resetDefaultMusicBtn" class="btn-cancel-vocab">Nhạc mặc định</button>
+        <button type="button" id="closeMusicModalDoneBtn" class="btn-save-vocab">Xong</button>
+      </div>
+    </div>
+  </div>
+
   <div id="app">
     <header>
       <h1>CHỦ NHẬT TIỆC VỜI NÍ NHỈ</h1>
       <div class="header-action-row">
         <div class="timer-bar">⏱ Thời gian cho ní chiến đấu: <span id="timer">10:00</span></div>
         <button id="openAddModalBtn" class="add-vocab-btn" title="Thêm từ vựng mới">➕ Thêm từ vựng</button>
+        <button id="openMusicModalBtn" class="music-action-btn" title="Thêm & điều khiển nhạc">🎵 Thêm nhạc</button>
       </div>
     </header>
     <div class="progress-wrap">
@@ -948,22 +1113,154 @@
       snowLayer.appendChild(flake);
     }
 
-    // ── Nhạc nền tự động ──────────────────────────────────────────
+    // ── Nhạc nền tự động & Quản lý nhạc ──────────────────────────
     const bgMusic = new Audio('nhac1.mp3');
     bgMusic.loop = true;
     bgMusic.volume = 0.35;
 
     let musicStarted = false;
+
+    const openMusicModalBtn = document.getElementById('openMusicModalBtn');
+    const musicModal = document.getElementById('musicModal');
+    const closeMusicModalBtn = document.getElementById('closeMusicModalBtn');
+    const closeMusicModalDoneBtn = document.getElementById('closeMusicModalDoneBtn');
+    const musicFileInput = document.getElementById('musicFileInput');
+    const musicUrlInput = document.getElementById('musicUrlInput');
+    const applyUrlBtn = document.getElementById('applyUrlBtn');
+    const volumeSlider = document.getElementById('volumeSlider');
+    const volumeValue = document.getElementById('volumeValue');
+    const togglePlayBtn = document.getElementById('togglePlayBtn');
+    const resetDefaultMusicBtn = document.getElementById('resetDefaultMusicBtn');
+    const currentTrackName = document.getElementById('currentTrackName');
+    const musicMsg = document.getElementById('musicMsg');
+
+    function updateMusicUI(isPlaying) {
+      if (!openMusicModalBtn) return;
+      if (isPlaying) {
+        if (togglePlayBtn) togglePlayBtn.textContent = '⏸ Tạm dừng';
+        openMusicModalBtn.classList.add('playing');
+        openMusicModalBtn.textContent = '🎵 Đang phát';
+      } else {
+        if (togglePlayBtn) togglePlayBtn.textContent = '▶ Phát nhạc';
+        openMusicModalBtn.classList.remove('playing');
+        openMusicModalBtn.textContent = '🎵 Nhạc: Tắt';
+      }
+    }
+
     function tryPlayMusic() {
       if (musicStarted) return;
-      bgMusic.play().then(() => { musicStarted = true; }).catch(() => { });
+      bgMusic.play().then(() => {
+        musicStarted = true;
+        updateMusicUI(true);
+      }).catch(() => { });
     }
 
     // Phát khi người dùng tương tác lần đầu (trình duyệt yêu cầu)
     document.addEventListener('click', tryPlayMusic, { once: true });
     document.addEventListener('touchstart', tryPlayMusic, { once: true });
     // Thử phát ngay (sẽ thành công nếu trình duyệt cho phép)
-    bgMusic.play().then(() => { musicStarted = true; }).catch(() => { });
+    bgMusic.play().then(() => {
+      musicStarted = true;
+      updateMusicUI(true);
+    }).catch(() => { });
+
+    function showMusicModal() {
+      musicModal.style.display = 'flex';
+      musicMsg.textContent = '';
+    }
+
+    function hideMusicModal() {
+      musicModal.style.display = 'none';
+    }
+
+    openMusicModalBtn.addEventListener('click', showMusicModal);
+    closeMusicModalBtn.addEventListener('click', hideMusicModal);
+    closeMusicModalDoneBtn.addEventListener('click', hideMusicModal);
+    musicModal.addEventListener('click', (e) => {
+      if (e.target === musicModal) hideMusicModal();
+    });
+
+    // Chọn file nhạc từ máy tính
+    musicFileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      try {
+        const fileUrl = URL.createObjectURL(file);
+        bgMusic.pause();
+        bgMusic.src = fileUrl;
+        bgMusic.play().then(() => {
+          musicStarted = true;
+          updateMusicUI(true);
+        }).catch(() => {});
+        currentTrackName.textContent = '🎶 ' + file.name + ' (File từ máy)';
+        musicMsg.style.color = '#3fae5a';
+        musicMsg.textContent = '✔ Đã thêm và phát bài nhạc "' + file.name + '"!';
+      } catch (err) {
+        musicMsg.style.color = '#d9534f';
+        musicMsg.textContent = '❌ Không thể phát file này: ' + err.message;
+      }
+    });
+
+    // Dán link nhạc URL
+    applyUrlBtn.addEventListener('click', () => {
+      const url = musicUrlInput.value.trim();
+      if (!url) {
+        musicMsg.style.color = '#d9534f';
+        musicMsg.textContent = '⚠ Vui lòng nhập link URL file nhạc!';
+        return;
+      }
+      try {
+        bgMusic.pause();
+        bgMusic.src = url;
+        bgMusic.play().then(() => {
+          musicStarted = true;
+          updateMusicUI(true);
+        }).catch((err) => {
+          musicMsg.style.color = '#d9534f';
+          musicMsg.textContent = '⚠ Lỗi tải nhạc từ link này (kiểm tra link direct .mp3 hoặc phân quyền CORS)';
+        });
+        const nameFromUrl = url.split('/').pop().split('?')[0] || 'Nhạc từ link online';
+        currentTrackName.textContent = '🎶 ' + decodeURIComponent(nameFromUrl);
+        musicMsg.style.color = '#3fae5a';
+        musicMsg.textContent = '✔ Đã áp dụng link nhạc mới!';
+      } catch (err) {
+        musicMsg.style.color = '#d9534f';
+        musicMsg.textContent = '❌ Lỗi đường dẫn: ' + err.message;
+      }
+    });
+
+    // Điều chỉnh âm lượng
+    volumeSlider.addEventListener('input', (e) => {
+      const val = e.target.value;
+      volumeValue.textContent = val + '%';
+      bgMusic.volume = val / 100;
+    });
+
+    // Bật / Tạm dừng
+    togglePlayBtn.addEventListener('click', () => {
+      if (bgMusic.paused) {
+        bgMusic.play().then(() => {
+          musicStarted = true;
+          updateMusicUI(true);
+        }).catch(() => {});
+      } else {
+        bgMusic.pause();
+        updateMusicUI(false);
+      }
+    });
+
+    // Trở về bài nhạc mặc định nhac1.mp3
+    resetDefaultMusicBtn.addEventListener('click', () => {
+      bgMusic.pause();
+      bgMusic.src = 'nhac1.mp3';
+      bgMusic.play().then(() => {
+        musicStarted = true;
+        updateMusicUI(true);
+      }).catch(() => {});
+      currentTrackName.textContent = '🎶 nhac1.mp3 (Nhạc mặc định)';
+      musicMsg.style.color = '#3fae5a';
+      musicMsg.textContent = '✔ Đã chuyển về bài nhạc mặc định nhac1.mp3';
+    });
     // ──────────────────────────────────────────────────────────────
 
     // ── Thao tác thêm từ vựng mới & CSDL ─────────────────────────
