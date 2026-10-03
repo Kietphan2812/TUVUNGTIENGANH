@@ -269,6 +269,95 @@
       background: rgba(255, 255, 255, 0.15);
     }
 
+    /* Khung hiển thị từ vựng vừa thêm gần nhất trong modal */
+    .last-vocab-container {
+      background: rgba(0, 0, 0, 0.32);
+      border: 1.5px dashed rgba(244, 197, 49, 0.55);
+      border-radius: 10px;
+      padding: 10px 14px;
+      text-align: left;
+      margin-top: 4px;
+      transition: all 0.3s ease;
+    }
+
+    .last-vocab-title {
+      font-size: 0.78rem;
+      color: var(--yellow);
+      font-weight: 700;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .last-vocab-content {
+      font-size: 0.92rem;
+      color: #fff;
+    }
+
+    .last-vocab-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 6px;
+      padding: 6px 10px;
+      border-left: 3px solid var(--yellow);
+    }
+
+    .last-vocab-en {
+      font-weight: 800;
+      color: var(--yellow);
+      font-size: 0.98rem;
+    }
+
+    .last-vocab-vi {
+      color: #f0f0f0;
+      font-size: 0.92rem;
+    }
+
+    .last-vocab-empty {
+      color: var(--muted);
+      font-style: italic;
+      font-size: 0.84rem;
+    }
+
+    /* Huy hiệu và hiệu ứng cho câu hỏi mới ở cuối bài */
+    .new-vocab-badge {
+      background: var(--yellow);
+      color: #1b2432;
+      font-size: 0.72rem;
+      font-weight: 800;
+      padding: 2px 8px;
+      border-radius: 4px;
+      margin-left: 8px;
+      vertical-align: middle;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: inline-block;
+      animation: pulseBadge 1.5s infinite;
+    }
+
+    @keyframes pulseBadge {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.08); }
+    }
+
+    .qcard.highlight-glow {
+      outline: 3px solid var(--yellow);
+      box-shadow: 0 0 24px rgba(244, 197, 49, 0.9);
+      animation: cardPopGlow 2.5s ease-out;
+    }
+
+    @keyframes cardPopGlow {
+      0% { transform: scale(0.97); }
+      20% { transform: scale(1.03); }
+      40% { transform: scale(1); }
+    }
+
 
     .progress-wrap {
       padding: 10px 20px 0;
@@ -485,6 +574,14 @@
           <input type="text" id="viMeaningInput" placeholder="Ví dụ: Quyến rũ, lộng lẫy..." autocomplete="off" />
         </div>
         <div id="modalMsg" class="modal-msg"></div>
+
+        <!-- Khung hiển thị từ vựng vừa thêm gần nhất -->
+        <div class="last-vocab-container" id="lastVocabBox">
+          <div class="last-vocab-title">📌 Từ vựng vừa thêm gần nhất:</div>
+          <div class="last-vocab-content" id="lastVocabText">
+            <span class="last-vocab-empty">Chưa có từ vựng nào được thêm gần đây</span>
+          </div>
+        </div>
       </div>
       <div class="modal-footer">
         <button type="button" id="saveVocabBtn" class="btn-save-vocab">Lưu từ vựng</button>
@@ -593,8 +690,10 @@
       QUESTIONS.forEach((q, qi) => {
         const card = document.createElement('div');
         card.className = 'qcard';
+        card.id = 'qcard-' + qi;
         const h3 = document.createElement('h3');
-        h3.innerHTML = '<span class="qnum">Câu ' + (qi + 1) + ':</span> ' + q.word;
+        const badgeHtml = q.isNew ? ' <span class="new-vocab-badge">✨ MỚI THÊM</span>' : '';
+        h3.innerHTML = '<span class="qnum">Câu ' + (qi + 1) + ':</span> ' + q.word + badgeHtml;
         card.appendChild(h3);
 
         q.options.forEach((opt, oi) => {
@@ -877,11 +976,33 @@
     const viMeaningInput = document.getElementById('viMeaningInput');
     const modalMsg = document.getElementById('modalMsg');
 
+    function updateLastVocabDisplay(word, meaning) {
+      const container = document.getElementById('lastVocabText');
+      if (!container) return;
+      if (word && meaning) {
+        container.innerHTML = `
+          <div class="last-vocab-item">
+            <div><span class="last-vocab-en">${word}</span> <span style="opacity:0.7;">—</span> <span class="last-vocab-vi">${meaning}</span></div>
+            <span style="font-size:0.75rem;color:var(--yellow);font-weight:700;">Vừa thêm</span>
+          </div>
+        `;
+      } else {
+        container.innerHTML = `<span class="last-vocab-empty">Chưa có từ vựng nào được thêm gần đây</span>`;
+      }
+    }
+
     function showAddModal() {
       addModal.style.display = 'flex';
       modalMsg.textContent = '';
       enWordInput.value = '';
       viMeaningInput.value = '';
+      // Tải từ vựng gần nhất từ localStorage nếu có
+      try {
+        const localList = JSON.parse(localStorage.getItem('custom_vocabularies') || '[]');
+        if (localList.length > 0) {
+          updateLastVocabDisplay(localList[0].word, localList[0].meaning);
+        }
+      } catch (e) {}
       setTimeout(() => enWordInput.focus(), 100);
     }
 
@@ -917,16 +1038,20 @@
       saveVocabBtn.disabled = true;
       saveVocabBtn.textContent = 'Đang lưu...';
 
-      // Tạo câu hỏi và thêm ngay vào đề thi
+      // Tạo câu hỏi và thêm vào CUỐI CÙNG của đề thi
       const newQ = createQuestionForWord(enWord, viMeaning);
+      newQ.isNew = true;
       MEANING_TO_WORD[viMeaning] = enWord;
-      BASE_QUESTIONS.unshift(newQ);
-      QUESTIONS.unshift(newQ);
-      answers.unshift(null);
+      BASE_QUESTIONS.push(newQ);
+      QUESTIONS.push(newQ);
+      answers.push(null);
 
       scoreLabel.textContent = 'Điểm: ' + grade() + '/' + QUESTIONS.length;
       updateProgress();
       render();
+
+      // Cập nhật hiển thị từ vựng vừa thêm trong modal
+      updateLastVocabDisplay(enWord, viMeaning);
 
       // Lưu vào localStorage
       try {
@@ -945,16 +1070,23 @@
       } catch (e) {}
 
       modalMsg.style.color = '#3fae5a';
-      modalMsg.innerHTML = '✔ Đã thêm từ "<strong>' + enWord + '</strong>" vào bài học và CSDL!';
+      modalMsg.innerHTML = '✔ Đã thêm câu hỏi từ "<strong>' + enWord + '</strong>" vào cuối bài thi!';
 
       saveVocabBtn.disabled = false;
       saveVocabBtn.textContent = 'Lưu từ vựng';
       enWordInput.value = '';
       viMeaningInput.value = '';
 
+      // Tự động đóng modal và cuộn trang mượt mà tới câu hỏi cuối cùng
       setTimeout(() => {
         hideAddModal();
-      }, 1000);
+        const lastIdx = QUESTIONS.length - 1;
+        const lastCard = document.getElementById('qcard-' + lastIdx);
+        if (lastCard) {
+          lastCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          lastCard.classList.add('highlight-glow');
+        }
+      }, 700);
     }
 
     saveVocabBtn.addEventListener('click', handleSaveVocab);
@@ -992,7 +1124,8 @@
         savedItems.forEach(v => {
           if (!BASE_QUESTIONS.some(q => q.word.toLowerCase() === v.word.toLowerCase())) {
             const newQ = createQuestionForWord(v.word, v.meaning);
-            BASE_QUESTIONS.unshift(newQ);
+            newQ.isNew = true;
+            BASE_QUESTIONS.push(newQ);
             MEANING_TO_WORD[v.meaning] = v.word;
             added = true;
           }
@@ -1004,6 +1137,7 @@
           updateProgress();
           render();
         }
+        updateLastVocabDisplay(savedItems[0].word, savedItems[0].meaning);
       }
     }
     loadSavedVocabularies();
