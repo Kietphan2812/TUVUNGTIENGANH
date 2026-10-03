@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CHỦ NHẬT TIỆC VỜI NÍ NHỈ</title>
+  <style>
+    :root {
+      --navy: #1b2432;
+      --navy-2: #232e40;
+      --yellow: #f4c531;
+      --pink: #b6579a;
+      --pink-dark: #a04b8a;
+      --green: #3fae5a;
+      --red: #d9534f;
+      --text: #f2f2f2;
+      --muted: #c7cdd6;
+      --bg-outer: #c6de2a;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: var(--bg-outer);
+      font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      min-height: 100vh;
+    }
+
+    #app {
+      width: 100%;
+      max-width: 720px;
+      background: var(--navy);
+      min-height: 100vh;
+      padding-bottom: 40px;
+    }
+
+    header {
+      background: var(--navy);
+      padding: 22px 20px 14px;
+      text-align: center;
+      position: sticky;
+      top: 0;
+      z-index: 5;
+    }
+
+    header h1 {
+      color: var(--text);
+      font-size: 1.5rem;
+      letter-spacing: 0.5px;
+      margin: 0 0 14px;
+      font-weight: 800;
+    }
+
+    .timer-bar {
+      background: var(--yellow);
+      color: #1b2432;
+      font-weight: 700;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 0.95rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .progress-wrap {
+      padding: 10px 20px 0;
+    }
+
+    .progress-track {
+      background: #2c3648;
+      border-radius: 6px;
+      height: 8px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      background: var(--green);
+      height: 100%;
+      width: 0%;
+      transition: width .3s ease;
+    }
+
+    .progress-label {
+      color: var(--muted);
+      font-size: 0.8rem;
+      margin: 6px 2px 0;
+      text-align: right;
+    }
+
+    main {
+      padding: 16px 16px 8px;
+    }
+
+    .qcard {
+      background: var(--pink);
+      border-radius: 14px;
+      padding: 16px 18px 20px;
+      margin-bottom: 18px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+    }
+
+    .qcard h3 {
+      color: #fff;
+      margin: 0 0 14px;
+      font-size: 1.05rem;
+      font-weight: 700;
+    }
+
+    .qcard .qnum {
+      opacity: 0.85;
+      font-weight: 600;
+    }
+
+    .option {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 2px solid rgba(255, 255, 255, 0.18);
+      border-radius: 10px;
+      padding: 10px 8px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: background .15s ease, border-color .15s ease, transform .1s ease;
+      user-select: none;
+    }
+
+    .option:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.4);
+    }
+
+    .option.selected {
+      background: rgba(244, 197, 49, 0.22);
+      border-color: var(--yellow);
+      box-shadow: 0 0 0 1px var(--yellow) inset;
+    }
+
+    .option.selected span {
+      font-weight: 700;
+    }
+
+    .option input {
+      accent-color: #fff;
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+      pointer-events: none;
+    }
+
+    .option span {
+      color: #fdfdfd;
+      font-size: 0.98rem;
+    }
+
+    .option.correct {
+      background: rgba(63, 174, 90, 0.35);
+      border-color: var(--green);
+      box-shadow: 0 0 0 1px var(--green) inset;
+    }
+
+    .option.wrong {
+      background: rgba(217, 83, 79, 0.35);
+      border-color: var(--red);
+      box-shadow: 0 0 0 1px var(--red) inset;
+    }
+
+    .option.disabled {
+      cursor: default;
+    }
+
+    #result-bar {
+      position: sticky;
+      bottom: 0;
+      background: var(--navy-2);
+      padding: 14px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid #33405a;
+    }
+
+    #result-bar .score {
+      color: var(--yellow);
+      font-weight: 800;
+      font-size: 1.05rem;
+    }
+
+    #submit-btn {
+      background: var(--yellow);
+      border: none;
+      color: #1b2432;
+      font-weight: 800;
+      padding: 10px 22px;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      cursor: pointer;
+    }
+
+    #submit-btn:disabled {
+      opacity: 0.5;
+      cursor: default;
+    }
+
+    #restart-btn {
+      display: none;
+      background: var(--navy-2);
+      color: var(--text);
+      border: 1px solid var(--yellow);
+      padding: 10px 22px;
+      border-radius: 8px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .snowflake {
+      position: absolute;
+      top: -10%;
+      color: rgba(255, 255, 255, 0.35);
+      pointer-events: none;
+      font-size: 14px;
+      animation-name: snowfall;
+      animation-timing-function: linear;
+      animation-iteration-count: infinite;
+      will-change: transform;
+    }
+
+    @keyframes snowfall {
+      0% {
+        transform: translateY(0) translateX(0) rotate(0deg);
+      }
+
+      25% {
+        transform: translateY(25vh) translateX(12px) rotate(90deg);
+      }
+
+      50% {
+        transform: translateY(55vh) translateX(-10px) rotate(180deg);
+      }
+
+      75% {
+        transform: translateY(80vh) translateX(14px) rotate(270deg);
+      }
+
+      100% {
+        transform: translateY(115vh) translateX(0) rotate(360deg);
+      }
+    }
+
+    #snow-layer {
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
+      pointer-events: none;
+      z-index: 1;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="snow-layer"></div>
+  <div id="app">
+    <header>
+      <h1>CHỦ NHẬT TIỆC VỜI NÍ NHỈ</h1>
+      <div class="timer-bar">⏱ Thời gian cho ní chiến đấu: <span id="timer">10:00</span></div>
+    </header>
+    <div class="progress-wrap">
+      <div class="progress-track">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+      <div class="progress-label" id="progressLabel">0/112 đã trả lời</div>
+    </div>
+    <main id="quiz"></main>
+    <div id="result-bar">
+      <div>
+        <div class="score" id="scoreLabel">Điểm: 0/112</div>
+        <div id="emailStatus" style="font-size:0.78rem;color:#c7cdd6;margin-top:4px;"></div>
+      </div>
+      <div>
+        <button id="submit-btn">Nộp bài</button>
+        <button id="restart-btn">Làm lại</button>
+      </div>
+    </div>
+  </div>
+  <script>
+    const BASE_QUESTIONS = [{ "word": "Able", "options": ["cũng vậy", "có thể", "điều kiện", "hành động"], "correct": 1 }, { "word": "Abandon", "options": ["bỏ", "sáng tạo", "cho phép", "và"], "correct": 0 }, { "word": "About", "options": ["khoảng, về", "bầu không khí", "thêm", "hành động"], "correct": 0 }, { "word": "Above", "options": ["đếm, tính", "đến", "khẳng định", "lên, trên"], "correct": 3 }, { "word": "Act", "options": ["lạnh", "hành động", "có thể", "tốt nhất"], "correct": 1 }, { "word": "Add", "options": ["động vật", "bận", "thêm", "tốt nhất"], "correct": 2 }, { "word": "Afraid", "options": ["bầu không khí", "sợ", "anh trai, em trai", "tất cả"], "correct": 1 }, { "word": "After", "options": ["thẻ, thiệp", "sau", "con bò", "thêm"], "correct": 1 }, { "word": "Again", "options": ["đằng sau", "đám mây", "lại", "hoàn thành"], "correct": 2 }, { "word": "Age", "options": ["thêm", "có thể", "tuổi", "lại"], "correct": 2 }, { "word": "Ago", "options": ["xấu xa", "trước đây", "tất cả", "anh trai, em trai"], "correct": 1 }, { "word": "Agree", "options": ["câu trả lời", "đồng ý", "thùng, hộp", "bánh mì"], "correct": 1 }, { "word": "Air", "options": ["mát mẻ", "bầu không khí", "kết nối", "giá, chi phí"], "correct": 1 }, { "word": "All", "options": ["leo trèo", "bờ", "tất cả", "con bò"], "correct": 2 }, { "word": "Allow", "options": ["nền tảng", "cho phép", "góc", "điều kiện"], "correct": 1 }, { "word": "Also", "options": ["sau", "cũng vậy", "bóng tối", "ngày"], "correct": 1 }, { "word": "Always", "options": ["đốt cháy", "luôn luôn", "lại", "nền tảng"], "correct": 1 }, { "word": "Among", "options": ["đứa trẻ", "xem xét, coi như", "nắm lấy", "ở giữa"], "correct": 3 }, { "word": "And", "options": ["tức giận", "và", "ở giữa", "tin tưởng"], "correct": 1 }, { "word": "Anger", "options": ["cắm trại", "bố, ba, cha", "thế kỉ", "tức giận"], "correct": 3 }, { "word": "Animal", "options": ["con gà", "nắm lấy", "động vật", "ở giữa"], "correct": 2 }, { "word": "Answer", "options": ["hoàn thành", "tức giận", "động vật", "câu trả lời"], "correct": 3 }, { "word": "Appear", "options": ["cả hai", "anh trai, em trai", "đóng", "xuất hiện"], "correct": 3 }, { "word": "Apple", "options": ["quả táo", "bỏ", "mát mẻ", "đám mây"], "correct": 0 }, { "word": "Area", "options": ["diện tích, khu vực", "bận", "kết nối", "bóng tối"], "correct": 0 }, { "word": "Arrange", "options": ["thẻ, thiệp", "động vật", "sắp xếp", "có thể"], "correct": 2 }, { "word": "Arrive", "options": ["tất cả", "vòng tròn", "đến", "điều kiện"], "correct": 2 }, { "word": "Art", "options": ["nghệ thuật", "tức giận", "sự nguy hiểm", "bánh mì"], "correct": 0 }, { "word": "Baby", "options": ["mèo", "to lớn", "đứa trẻ", "đóng"], "correct": 2 }, { "word": "Back", "options": ["trở lại", "máu", "sau", "quả bóng"], "correct": 0 }, { "word": "Bad", "options": ["con bò", "xấu xa", "mèo", "trước đây"], "correct": 1 }, { "word": "Ball", "options": ["luôn luôn", "chắc chắn", "quả bóng", "tiếp tục"], "correct": 2 }, { "word": "Bank", "options": ["nghệ thuật", "bờ", "nhảy", "quần áo"], "correct": 1 }, { "word": "Beauty", "options": ["đốt cháy", "vẻ đẹp", "điều khiển", "xem xét, coi như"], "correct": 1 }, { "word": "Believe", "options": ["đứa trẻ", "tin tưởng", "quả bóng", "cũng vậy"], "correct": 1 }, { "word": "Basic", "options": ["nền tảng", "trở lại", "lạnh", "đám mây"], "correct": 0 }, { "word": "Best", "options": ["tốt nhất", "sau", "có thể", "hoàn thành"], "correct": 0 }, { "word": "Before", "options": ["thì là", "con gà", "đằng trước", "tuổi"], "correct": 2 }, { "word": "Behind", "options": ["luôn luôn", "quần áo", "nghệ thuật", "đằng sau"], "correct": 3 }, { "word": "Bed", "options": ["cái giường", "diện tích, khu vực", "bầu không khí", "gọi"], "correct": 0 }, { "word": "Blood", "options": ["cắm trại", "thùng, hộp", "gọi", "máu"], "correct": 3 }, { "word": "Begin", "options": ["kết nối", "xem xét, coi như", "bắt đầu", "nấu ăn"], "correct": 2 }, { "word": "Big", "options": ["to lớn", "tất cả", "con bò", "bận"], "correct": 0 }, { "word": "Be", "options": ["ở giữa", "sự chăm sóc", "leo trèo", "thì là"], "correct": 3 }, { "word": "Busy", "options": ["quả bóng", "cái ghế", "tuổi", "bận"], "correct": 3 }, { "word": "But", "options": ["xem xét, coi như", "quần áo", "nhưng", "sợ"], "correct": 2 }, { "word": "Box", "options": ["mèo", "gọi", "câu trả lời", "thùng, hộp"], "correct": 3 }, { "word": "Bought", "options": ["mua", "anh trai, em trai", "câu trả lời", "sau"], "correct": 0 }, { "word": "Bread", "options": ["ngủm củ cải", "thẻ, thiệp", "tốt nhất", "bánh mì"], "correct": 3 }, { "word": "Brother", "options": ["anh trai, em trai", "đằng trước", "tức giận", "diện tích, khu vực"], "correct": 0 }, { "word": "Both", "options": ["cả hai", "máu", "sau", "bố, ba, cha"], "correct": 0 }, { "word": "Boat", "options": ["chọn lựa", "thuyền", "động vật", "vòng tròn"], "correct": 1 }, { "word": "Burn", "options": ["lại", "đốt cháy", "đóng", "quả táo"], "correct": 1 }, { "word": "Call", "options": ["gọi", "thuyền", "sạch sẽ", "cũng vậy"], "correct": 0 }, { "word": "Chance", "options": ["sự may rủi", "so sánh", "trước đây", "gọi"], "correct": 0 }, { "word": "Camp", "options": ["điều khiển", "máu", "cắm trại", "đếm, tính"], "correct": 2 }, { "word": "Car", "options": ["luôn luôn", "xe ô tô", "điều khiển", "kết nối"], "correct": 1 }, { "word": "Capital", "options": ["tuổi", "nhảy", "bỏ", "thủ đô"], "correct": 3 }, { "word": "Care", "options": ["sự chăm sóc", "leo trèo", "tuổi", "nghệ thuật"], "correct": 0 }, { "word": "Card", "options": ["thẻ, thiệp", "quả bóng", "lại", "mua"], "correct": 0 }, { "word": "Chair", "options": ["cái ghế", "có thể", "đằng sau", "quần áo"], "correct": 0 }, { "word": "Certain", "options": ["tất cả", "chắc chắn", "tiếp tục", "ở giữa"], "correct": 1 }, { "word": "Check", "options": ["kiểm tra", "bố, ba, cha", "đám mây", "tức giận"], "correct": 0 }, { "word": "Cat", "options": ["đếm, tính", "thì là", "mèo", "đến"], "correct": 2 }, { "word": "Catch", "options": ["đồng ý", "bờ", "sợ", "nắm lấy"], "correct": 3 }, { "word": "Circle", "options": ["có thể", "vòng tròn", "bóng tối", "to lớn"], "correct": 1 }, { "word": "Chicken", "options": ["sáng tạo", "động vật", "xe ô tô", "con gà"], "correct": 3 }, { "word": "Character", "options": ["tính cách", "cho phép", "góc", "tuổi"], "correct": 0 }, { "word": "Choose", "options": ["đám mây", "mua", "chọn lựa", "thế kỉ"], "correct": 2 }, { "word": "Climb", "options": ["thùng, hộp", "leo trèo", "cái giường", "thêm"], "correct": 1 }, { "word": "Clothe", "options": ["quần áo", "điều khiển", "quả bóng", "mát mẻ"], "correct": 0 }, { "word": "Cloud", "options": ["đám mây", "tức giận", "so sánh", "bố, ba, cha"], "correct": 0 }, { "word": "Claim", "options": ["khẳng định", "đốt cháy", "lên, trên", "xuất hiện"], "correct": 0 }, { "word": "Clean", "options": ["ngủm củ cải", "sạch sẽ", "động vật", "tin tưởng"], "correct": 1 }, { "word": "Collect", "options": ["cái ghế", "sắp xếp", "đứa trẻ", "sưu tầm"], "correct": 3 }, { "word": "Century", "options": ["trở lại", "thế kỉ", "đứa trẻ", "thoả thuận"], "correct": 1 }, { "word": "Cold", "options": ["lạnh", "nền tảng", "to lớn", "thuyền"], "correct": 0 }, { "word": "Close", "options": ["vòng tròn", "đóng", "kết nối", "thuyền"], "correct": 1 }, { "word": "Come", "options": ["xuất hiện", "đến", "tin tưởng", "thế kỉ"], "correct": 1 }, { "word": "Column", "options": ["cột", "lạnh", "cắm trại", "bận"], "correct": 0 }, { "word": "Compare", "options": ["so sánh", "sạch sẽ", "anh trai, em trai", "diện tích, khu vực"], "correct": 0 }, { "word": "Complete", "options": ["có thể", "chọn lựa", "hoàn thành", "con gà"], "correct": 2 }, { "word": "Condition", "options": ["điều khiển", "lại", "điều kiện", "to lớn"], "correct": 2 }, { "word": "Connect", "options": ["đất nước, quốc gia", "đằng sau", "kết nối", "nắm lấy"], "correct": 2 }, { "word": "Consider", "options": ["thuyền", "bắt đầu", "xem xét, coi như", "giá, chi phí"], "correct": 2 }, { "word": "Continue", "options": ["gọi", "diện tích, khu vực", "điều khiển", "tiếp tục"], "correct": 3 }, { "word": "Control", "options": ["khẳng định", "đến", "đằng sau", "điều khiển"], "correct": 3 }, { "word": "Cook", "options": ["đằng sau", "tốt nhất", "đến", "nấu ăn"], "correct": 3 }, { "word": "Cool", "options": ["thẻ, thiệp", "mát mẻ", "điều khiển", "xe ô tô"], "correct": 1 }, { "word": "Corner", "options": ["góc", "câu trả lời", "sáng tạo", "thoả thuận"], "correct": 0 }, { "word": "Cost", "options": ["nhảy", "giá, chi phí", "đồng ý", "xấu xa"], "correct": 1 }, { "word": "Could", "options": ["sợ", "tức giận", "có thể", "hành động"], "correct": 2 }, { "word": "Count", "options": ["sự chăm sóc", "đếm, tính", "so sánh", "gọi"], "correct": 1 }, { "word": "Country", "options": ["đất nước, quốc gia", "mèo", "quả bóng", "thuyền"], "correct": 0 }, { "word": "Cow", "options": ["bóng tối", "tất cả", "nhảy", "con bò"], "correct": 3 }, { "word": "Create", "options": ["con gà", "sáng tạo", "thẻ, thiệp", "góc"], "correct": 1 }, { "word": "Dad", "options": ["cũng vậy", "sự chăm sóc", "ở giữa", "bố, ba, cha"], "correct": 3 }, { "word": "Dance", "options": ["bố, ba, cha", "xe ô tô", "đến", "nhảy"], "correct": 3 }, { "word": "Danger", "options": ["cái ghế", "động vật", "sáng tạo", "sự nguy hiểm"], "correct": 3 }, { "word": "Dark", "options": ["nền tảng", "hoàn thành", "sự nguy hiểm", "bóng tối"], "correct": 3 }, { "word": "Day", "options": ["ngày", "xe ô tô", "nền tảng", "tuổi"], "correct": 0 }, { "word": "Dead", "options": ["máu", "leo trèo", "ngủm củ cải", "to lớn"], "correct": 2 }, { "word": "Deal", "options": ["thoả thuận", "trở lại", "mát mẻ", "anh trai, em trai"], "correct": 0 }, { "word": "Decide", "options": ["quyết định", "sắp xếp", "khẳng định", "thế kỉ"], "correct": 0 }, { "word": "Deep", "options": ["bóng tối", "sâu", "mát mẻ", "lạnh"], "correct": 1 }, { "word": "Degree", "options": ["cho phép", "sự nguy hiểm", "mức độ, trình độ", "thoả thuận"], "correct": 2 }, { "word": "Depend", "options": ["phụ thuộc, tùy thuộc", "quyết định", "lên, trên", "cho phép"], "correct": 0 }, { "word": "Describe", "options": ["diễn tả, miêu tả", "mức độ, trình độ", "so sánh", "hoàn thành"], "correct": 0 }, { "word": "Design", "options": ["thiết kế", "quyết định", "đồng ý", "giải thích"], "correct": 0 }, { "word": "Determine", "options": ["xác định", "bỏ đi", "ẩn giấu", "điều chỉnh"], "correct": 0 }, { "word": "Difficult", "options": ["khó khăn", "dễ dàng", "mạnh mẽ", "thỏa thuận"], "correct": 0 }, { "word": "Discuss", "options": ["thảo luận, tranh luận", "xây dựng", "tạo ra", "ngừng lại"], "correct": 0 }];
+
+    let englishVoice = null;
+    function pickEnglishVoice() {
+      if (!('speechSynthesis' in window)) return;
+      const voices = window.speechSynthesis.getVoices();
+      if (!voices || !voices.length) return;
+      englishVoice =
+        voices.find(v => /en-US/i.test(v.lang) && /Google|Natural|Microsoft/i.test(v.name)) ||
+        voices.find(v => /en-US/i.test(v.lang)) ||
+        voices.find(v => /^en/i.test(v.lang)) ||
+        null;
+    }
+    if ('speechSynthesis' in window) {
+      pickEnglishVoice();
+      window.speechSynthesis.onvoiceschanged = pickEnglishVoice;
+    }
+
+    function speakWord(word) {
+      if (!('speechSynthesis' in window)) return;
+      try {
+        window.speechSynthesis.cancel();
+        const utter = new SpeechSynthesisUtterance(word);
+        utter.lang = 'en-US';
+        utter.rate = 0.9;
+        if (englishVoice) utter.voice = englishVoice;
+        window.speechSynthesis.speak(utter);
+      } catch (e) {
+        // Trình duyệt không hỗ trợ phát âm - bỏ qua lặng lẽ
+      }
+    }
+
+    function shuffleArray(arr) {
+      const a = arr.slice();
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    function buildShuffledQuestions() {
+      return shuffleArray(BASE_QUESTIONS).map(q => {
+        const optionOrder = shuffleArray(q.options.map((opt, idx) => ({ opt, idx })));
+        const newOptions = optionOrder.map(o => o.opt);
+        const newCorrect = optionOrder.findIndex(o => o.idx === q.correct);
+        return { word: q.word, options: newOptions, correct: newCorrect };
+      });
+    }
+
+    let QUESTIONS = buildShuffledQuestions();
+
+    const MEANING_TO_WORD = {};
+    BASE_QUESTIONS.forEach(q => {
+      MEANING_TO_WORD[q.options[q.correct]] = q.word;
+    });
+
+    const quizEl = document.getElementById('quiz');
+    const progressFill = document.getElementById('progressFill');
+    const progressLabel = document.getElementById('progressLabel');
+    const scoreLabel = document.getElementById('scoreLabel');
+    const submitBtn = document.getElementById('submit-btn');
+    const restartBtn = document.getElementById('restart-btn');
+    const timerEl = document.getElementById('timer');
+
+    let answers = new Array(QUESTIONS.length).fill(null);
+    let submitted = false;
+
+    function render() {
+      quizEl.innerHTML = '';
+      QUESTIONS.forEach((q, qi) => {
+        const card = document.createElement('div');
+        card.className = 'qcard';
+        const h3 = document.createElement('h3');
+        h3.innerHTML = '<span class="qnum">Câu ' + (qi + 1) + ':</span> ' + q.word;
+        card.appendChild(h3);
+
+        q.options.forEach((opt, oi) => {
+          const label = document.createElement('label');
+          label.className = 'option';
+          if (answers[qi] === oi) label.classList.add('selected');
+          label.dataset.qi = qi;
+          label.dataset.oi = oi;
+
+          const input = document.createElement('input');
+          input.type = 'radio';
+          input.name = 'q' + qi;
+          input.value = oi;
+          if (answers[qi] === oi) input.checked = true;
+
+          const span = document.createElement('span');
+          const letter = String.fromCharCode(65 + oi);
+          span.textContent = letter + '. ' + opt;
+
+          label.appendChild(input);
+          label.appendChild(span);
+          label.addEventListener('click', (e) => {
+            if (submitted) return;
+            answers[qi] = oi;
+            updateProgress();
+            render();
+            const clickedMeaning = opt;
+            const englishWord = MEANING_TO_WORD[clickedMeaning] || q.word;
+            speakWord(englishWord);
+          });
+          card.appendChild(label);
+        });
+        quizEl.appendChild(card);
+      });
+
+      if (submitted) {
+        document.querySelectorAll('.option').forEach(el => {
+          const qi = +el.dataset.qi, oi = +el.dataset.oi;
+          el.classList.add('disabled');
+          el.classList.remove('selected');
+          if (oi === QUESTIONS[qi].correct) {
+            el.classList.add('correct');
+          } else if (answers[qi] === oi) {
+            el.classList.add('wrong');
+          }
+        });
+      }
+    }
+
+    function updateProgress() {
+      const answered = answers.filter(a => a !== null).length;
+      const pct = (answered / QUESTIONS.length) * 100;
+      progressFill.style.width = pct + '%';
+      progressLabel.textContent = answered + '/' + QUESTIONS.length + ' đã trả lời';
+    }
+
+    function grade() {
+      let score = 0;
+      answers.forEach((a, i) => { if (a === QUESTIONS[i].correct) score++; });
+      return score;
+    }
+
+    const FORMSPREE_ENDPOINT = 'https://formspree.io/f/xojoynke';
+    let quizStartTime = Date.now();
+
+    function formatTimeSpent(ms) {
+      const totalSec = Math.round(ms / 1000);
+      const m = Math.floor(totalSec / 60);
+      const s = totalSec % 60;
+      return m + ' phút ' + s + ' giây';
+    }
+
+    function formatSubmittedNow() {
+      const d = new Date();
+      const hh = d.getHours().toString().padStart(2, '0');
+      const mm = d.getMinutes().toString().padStart(2, '0');
+      const dd = d.getDate();
+      const mo = d.getMonth() + 1;
+      const yy = d.getFullYear();
+      return hh + ':' + mm + ' ' + dd + '/' + mo + '/' + yy;
+    }
+
+    function submitViaHiddenIframe(fields) {
+      return new Promise((resolve) => {
+        let iframe = document.getElementById('formspree-fallback-iframe');
+        if (!iframe) {
+          iframe = document.createElement('iframe');
+          iframe.id = 'formspree-fallback-iframe';
+          iframe.name = 'formspree-fallback-iframe';
+          iframe.style.display = 'none';
+          document.body.appendChild(iframe);
+        }
+        const form = document.createElement('form');
+        form.action = FORMSPREE_ENDPOINT;
+        form.method = 'POST';
+        form.target = 'formspree-fallback-iframe';
+        form.style.display = 'none';
+        Object.entries(fields).forEach(([k, v]) => {
+          const input = document.createElement('input');
+          input.type = 'hidden';
+          input.name = k;
+          input.value = v;
+          form.appendChild(input);
+        });
+        document.body.appendChild(form);
+        let done = false;
+        iframe.onload = () => {
+          if (done) return;
+          done = true;
+          form.remove();
+          resolve(true);
+        };
+        form.submit();
+        setTimeout(() => {
+          if (done) return;
+          done = true;
+          form.remove();
+          resolve(true);
+        }, 4000);
+      });
+    }
+
+    async function sendResultEmail(score, total, percentage, timeSpentMs) {
+      const statusEl = document.getElementById('emailStatus');
+      statusEl.textContent = 'Đang gửi kết quả qua email...';
+      statusEl.style.color = '#c7cdd6';
+
+      const fields = {
+        score: score,
+        total: total,
+        percentage: percentage,
+        time_spent: formatTimeSpent(timeSpentMs),
+        submitted: formatSubmittedNow(),
+        _subject: 'New quiz submission - Điểm: ' + score + '/' + total
+      };
+
+      try {
+        const fd = new FormData();
+        Object.entries(fields).forEach(([k, v]) => fd.append(k, v));
+        const res = await fetch(FORMSPREE_ENDPOINT, {
+          method: 'POST',
+          headers: { 'Accept': 'application/json' },
+          body: fd
+        });
+        if (res.ok) {
+          statusEl.innerHTML = '✔ Đã gửi kết quả về email!';
+          statusEl.style.color = '#3fae5a';
+          return;
+        }
+        throw new Error('HTTP ' + res.status);
+      } catch (err) {
+        statusEl.textContent = 'Không gửi được trực tiếp, đang thử cách khác...';
+        try {
+          await submitViaHiddenIframe(fields);
+          statusEl.innerHTML = '✔ Đã gửi yêu cầu kết quả (phương án dự phòng). Kiểm tra email trong vài phút.';
+          statusEl.style.color = '#3fae5a';
+        } catch (err2) {
+          statusEl.innerHTML = '⚠ Không thể gửi email tự động. <button id="retryEmailBtn" style="text-decoration:underline;background:none;border:none;color:#f4c531;cursor:pointer;padding:0;font-size:0.78rem;">Thử lại</button>';
+          statusEl.style.color = '#d9534f';
+          const retryBtn = document.getElementById('retryEmailBtn');
+          if (retryBtn) {
+            retryBtn.addEventListener('click', () => sendResultEmail(score, total, percentage, timeSpentMs));
+          }
+        }
+      }
+    }
+
+    submitBtn.addEventListener('click', () => {
+      submitted = true;
+      const score = grade();
+      const total = QUESTIONS.length;
+      const percentage = Math.round((score / total) * 100);
+      const timeSpentMs = Date.now() - quizStartTime;
+      scoreLabel.textContent = 'Điểm: ' + score + '/' + total;
+      submitBtn.style.display = 'none';
+      restartBtn.style.display = 'inline-block';
+      render();
+      clearInterval(timerInterval);
+      sendResultEmail(score, total, percentage, timeSpentMs);
+    });
+
+    restartBtn.addEventListener('click', () => {
+      QUESTIONS = buildShuffledQuestions();
+      answers = new Array(QUESTIONS.length).fill(null);
+      submitted = false;
+      submitBtn.style.display = 'inline-block';
+      submitBtn.disabled = false;
+      restartBtn.style.display = 'none';
+      scoreLabel.textContent = 'Điểm: 0/' + QUESTIONS.length;
+      document.getElementById('emailStatus').textContent = '';
+      quizStartTime = Date.now();
+      updateProgress();
+      render();
+      startTimer(10 * 60);
+    });
+
+    // Timer
+    let timerInterval;
+    function startTimer(seconds) {
+      let remaining = seconds;
+      updateTimerDisplay(remaining);
+      clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        remaining--;
+        if (remaining <= 0) {
+          remaining = 0;
+          updateTimerDisplay(remaining);
+          clearInterval(timerInterval);
+          if (!submitted) submitBtn.click();
+          return;
+        }
+        updateTimerDisplay(remaining);
+      }, 1000);
+    }
+    function updateTimerDisplay(s) {
+      const m = Math.floor(s / 60).toString().padStart(2, '0');
+      const ss = (s % 60).toString().padStart(2, '0');
+      timerEl.textContent = m + ':' + ss;
+    }
+
+    // Snow decoration - smooth continuous falling snowflakes
+    const snowLayer = document.getElementById('snow-layer');
+    const flakeChars = ['❋', '❄', '❅', '❆', '✻', 'ZZ', 'MM', 'HIHI', 'HAHA'];
+    for (let i = 0; i < 24; i++) {
+      const flake = document.createElement('div');
+      flake.className = 'snowflake';
+      flake.textContent = flakeChars[Math.floor(Math.random() * flakeChars.length)];
+      flake.style.left = Math.random() * 100 + '%';
+      flake.style.fontSize = (10 + Math.random() * 12) + 'px';
+      flake.style.opacity = (0.2 + Math.random() * 0.5).toFixed(2);
+      const duration = 10 + Math.random() * 14;
+      flake.style.animationDuration = duration + 's';
+      flake.style.animationDelay = (-Math.random() * duration) + 's';
+      snowLayer.appendChild(flake);
+    }
+
+    // ── Nhạc nền tự động ──────────────────────────────────────────
+    const bgMusic = new Audio('nhac1.mp3');
+    bgMusic.loop = true;
+    bgMusic.volume = 0.35;
+
+    let musicStarted = false;
+    function tryPlayMusic() {
+      if (musicStarted) return;
+      bgMusic.play().then(() => { musicStarted = true; }).catch(() => { });
+    }
+
+    // Phát khi người dùng tương tác lần đầu (trình duyệt yêu cầu)
+    document.addEventListener('click', tryPlayMusic, { once: true });
+    document.addEventListener('touchstart', tryPlayMusic, { once: true });
+    // Thử phát ngay (sẽ thành công nếu trình duyệt cho phép)
+    bgMusic.play().then(() => { musicStarted = true; }).catch(() => { });
+    // ──────────────────────────────────────────────────────────────
+
+    render();
+    updateProgress();
+    startTimer(10 * 60);
+  </script>
+</body>
+
+</html>
