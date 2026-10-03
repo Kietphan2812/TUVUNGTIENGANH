@@ -981,21 +981,48 @@
       });
     }
 
-    async function saveResultToDatabase(score, total, percentage, timeSpentMs) {
+    // ── Cấu hình Neon PostgreSQL trực tiếp (Đồng bộ mọi thiết bị: Điện thoại, PC, Tablet) ──
+    const NEON_SQL_ENDPOINT = 'https://ep-soft-water-b5s8b8i5-pooler.c-7.us-east-2.aws.neon.tech/sql';
+    const NEON_CONN_STR = 'postgresql://neondb_owner:npg_6ABamIU3Cpgh@ep-soft-water-b5s8b8i5-pooler.c-7.us-east-2.aws.neon.tech/neondb?sslmode=require';
+
+    function escapeSql(str) {
+      return (str || '').toString().replace(/'/g, "''").trim();
+    }
+
+    async function executeNeonSql(query) {
       try {
-        await fetch('/api/results', {
+        const res = await fetch(NEON_SQL_ENDPOINT, {
+          method: 'POST',
+          headers: {
+            'Neon-Connection-String': NEON_CONN_STR,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ query })
+        });
+        if (res.ok) {
+          const data = await res.json();
+          return data.rows || [];
+        }
+      } catch (err) {
+        console.warn('Neon SQL fetch error:', err);
+      }
+      return null;
+    }
+
+    async function saveResultToDatabase(score, total, percentage, timeSpentMs) {
+      const timeSpent = formatTimeSpent(timeSpentMs);
+      // Lưu thẳng vào Neon PostgreSQL qua HTTP
+      executeNeonSql(
+        `INSERT INTO quiz_results (score, total, percentage, time_spent) VALUES (${parseInt(score)}, ${parseInt(total)}, ${parseInt(percentage) || 0}, '${escapeSql(timeSpent)}');`
+      );
+      // Lưu qua backend API nếu có
+      try {
+        fetch('/api/results', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            score: score,
-            total: total,
-            percentage: percentage,
-            time_spent: formatTimeSpent(timeSpentMs)
-          })
-        });
-      } catch (e) {
-        // Che do static file/offline
-      }
+          body: JSON.stringify({ score, total, percentage, time_spent: timeSpent })
+        }).catch(() => {});
+      } catch (e) {}
     }
 
     async function sendResultEmail(score, total, percentage, timeSpentMs) {
@@ -1350,24 +1377,31 @@
       // Cập nhật hiển thị từ vựng vừa thêm trong modal
       updateLastVocabDisplay(enWord, viMeaning);
 
-      // Lưu vào localStorage
+      // 1. Lưu trực tiếp vào Neon PostgreSQL để MỌI THIẾT BỊ (Điện thoại, PC khác) đều nhận ngay lập tức!
+      executeNeonSql(
+        `INSERT INTO vocabularies (word, meaning) VALUES ('${escapeSql(enWord)}', '${escapeSql(viMeaning)}') RETURNING id, word, meaning;`
+      );
+
+      // 2. Lưu dự phòng vào localStorage
       try {
         const localList = JSON.parse(localStorage.getItem('custom_vocabularies') || '[]');
-        localList.unshift({ word: enWord, meaning: viMeaning });
-        localStorage.setItem('custom_vocabularies', JSON.stringify(localList));
+        if (!localList.some(item => item.word.toLowerCase() === enWord.toLowerCase())) {
+          localList.unshift({ word: enWord, meaning: viMeaning });
+          localStorage.setItem('custom_vocabularies', JSON.stringify(localList));
+        }
       } catch (e) {}
 
-      // Lưu vào Neon SQL backend nếu có kết nối
+      // 3. Gửi qua backend nếu có
       try {
-        await fetch('/api/vocabularies', {
+        fetch('/api/vocabularies', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ word: enWord, meaning: viMeaning })
-        });
+        }).catch(() => {});
       } catch (e) {}
 
       modalMsg.style.color = '#3fae5a';
-      modalMsg.innerHTML = '✔ Đã thêm câu hỏi từ "<strong>' + enWord + '</strong>" vào cuối bài thi!';
+      modalMsg.innerHTML = '✔ Đã thêm câu hỏi từ "<strong>' + enWord + '</strong>" vào bài thi & CSDL Neon!';
 
       saveVocabBtn.disabled = false;
       saveVocabBtn.textContent = 'Lưu từ vựng';
@@ -1394,28 +1428,46 @@
       if (e.key === 'Enter') handleSaveVocab();
     });
 
-    // Tự động tải từ vựng đã lưu từ Neon SQL hoặc localStorage khi mở trang
+    // Tự động đồng bộ từ vựng từ Neon SQL cho mọi thiết bị (Điện thoại, Máy tính khác)
     async function loadSavedVocabularies() {
       let savedItems = [];
-      try {
-        const local = JSON.parse(localStorage.getItem('custom_vocabularies') || '[]');
-        savedItems = local;
-      } catch (e) {}
 
+      // Bước 1: Tải toàn bộ từ vựng trực tiếp từ Neon PostgreSQL (Đồng bộ mọi thiết bị)
+      const neonRows = await executeNeonSql('SELECT id, word, meaning FROM vocabularies ORDER BY id ASC;');
+      if (neonRows && neonRows.length > 0) {
+        savedItems = neonRows;
+      }
+
+      // Bước 2: Tải thêm từ backend API nếu chạy qua Node.js
+      if (savedItems.length === 0) {
+        try {
+          const res = await fetch('/api/vocabularies');
+          if (res.ok) {
+            const json = await res.json();
+            if (json.success && Array.isArray(json.data)) {
+              savedItems = json.data;
+            }
+          }
+        } catch (e) {}
+      }
+
+      // Bước 3: Tự động tải từ localStorage của máy này và đồng bộ lên Neon nếu Neon chưa có
       try {
-        const res = await fetch('/api/vocabularies');
-        if (res.ok) {
-          const json = await res.json();
-          if (json.success && Array.isArray(json.data)) {
-            json.data.forEach(item => {
-              if (!savedItems.some(s => s.word.toLowerCase() === item.word.toLowerCase())) {
-                savedItems.push(item);
-              }
-            });
+        const localList = JSON.parse(localStorage.getItem('custom_vocabularies') || '[]');
+        if (localList && localList.length > 0) {
+          for (const item of localList) {
+            if (!savedItems.some(s => s.word.toLowerCase() === item.word.toLowerCase())) {
+              savedItems.push(item);
+              // Đồng bộ từ của máy tính này lên Neon để điện thoại cũng thấy ngay!
+              executeNeonSql(
+                `INSERT INTO vocabularies (word, meaning) VALUES ('${escapeSql(item.word)}', '${escapeSql(item.meaning)}');`
+              );
+            }
           }
         }
       } catch (e) {}
 
+      // Bước 4: Đưa tất cả từ vựng mới vào danh sách câu hỏi trắc nghiệm
       if (savedItems.length > 0) {
         let added = false;
         savedItems.forEach(v => {
@@ -1434,10 +1486,12 @@
           updateProgress();
           render();
         }
-        updateLastVocabDisplay(savedItems[0].word, savedItems[0].meaning);
+        const last = savedItems[savedItems.length - 1];
+        updateLastVocabDisplay(last.word, last.meaning);
       }
     }
     loadSavedVocabularies();
+
 
     render();
     updateProgress();
