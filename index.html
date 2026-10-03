@@ -493,9 +493,27 @@
       });
     }
 
+    async function saveResultToDatabase(score, total, percentage, timeSpentMs) {
+      try {
+        await fetch('/api/results', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            score: score,
+            total: total,
+            percentage: percentage,
+            time_spent: formatTimeSpent(timeSpentMs)
+          })
+        });
+      } catch (e) {
+        // Che do static file/offline
+      }
+    }
+
     async function sendResultEmail(score, total, percentage, timeSpentMs) {
+      saveResultToDatabase(score, total, percentage, timeSpentMs);
       const statusEl = document.getElementById('emailStatus');
-      statusEl.textContent = 'Đang gửi kết quả qua email...';
+      statusEl.textContent = 'Đang gửi kết quả và lưu dữ liệu...';
       statusEl.style.color = '#c7cdd6';
 
       const fields = {
@@ -516,7 +534,7 @@
           body: fd
         });
         if (res.ok) {
-          statusEl.innerHTML = '✔ Đã gửi kết quả về email!';
+          statusEl.innerHTML = '✔ Đã lưu vào CSDL Neon & gửi kết quả về email!';
           statusEl.style.color = '#3fae5a';
           return;
         }

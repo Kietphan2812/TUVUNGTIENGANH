@@ -1,0 +1,14 @@
+{
+  "name": "tuvungtienganh",
+  "version": "1.0.0",
+  "description": "Ung dung on tap tu vung tieng Anh ket noi Neon PostgreSQL",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "dotenv": "^18.0.5",
+    "express": "^5.2.1",
+    "pg": "^8.23.1"
+  }
+}
