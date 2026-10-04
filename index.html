@@ -1058,14 +1058,15 @@
         const res = await fetch(NEON_SQL_ENDPOINT, {
           method: 'POST',
           headers: {
-            'Neon-Connection-String': NEON_CONN_STR,
-            'Content-Type': 'application/json'
+            'Neon-Connection-String': NEON_CONN_STR
           },
           body: JSON.stringify({ query })
         });
         if (res.ok) {
           const data = await res.json();
           return data.rows || [];
+        } else {
+          console.warn('Neon SQL API error status:', res.status);
         }
       } catch (err) {
         console.warn('Neon SQL fetch error:', err);
