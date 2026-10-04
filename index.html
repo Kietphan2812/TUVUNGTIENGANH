@@ -325,6 +325,59 @@
       font-size: 0.84rem;
     }
 
+    /* Khung danh sách từ vựng đã đồng bộ CSDL Neon SQL */
+    .custom-vocab-summary {
+      margin-top: 10px;
+      padding: 10px 12px;
+      background: rgba(0, 0, 0, 0.28);
+      border-radius: 8px;
+      border: 1px solid rgba(244, 197, 49, 0.35);
+      max-height: 160px;
+      overflow-y: auto;
+      text-align: left;
+    }
+
+    .custom-vocab-header {
+      font-size: 0.8rem;
+      color: #e0e0e0;
+      font-weight: 700;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .sql-status-badge {
+      font-size: 0.72rem;
+      background: rgba(63, 174, 90, 0.2);
+      color: #3fae5a;
+      padding: 2px 6px;
+      border-radius: 4px;
+      border: 1px solid #3fae5a;
+    }
+
+    .custom-vocab-tags {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .vocab-badge-item {
+      font-size: 0.82rem;
+      background: rgba(255, 255, 255, 0.07);
+      padding: 5px 9px;
+      border-radius: 5px;
+      color: #f0f0f0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .vocab-badge-item strong {
+      color: var(--yellow);
+    }
+
     /* Huy hiệu và hiệu ứng cho câu hỏi mới ở cuối bài */
     .new-vocab-badge {
       background: var(--yellow);
@@ -703,6 +756,17 @@
           <div class="last-vocab-title">📌 Từ vựng vừa thêm gần nhất:</div>
           <div class="last-vocab-content" id="lastVocabText">
             <span class="last-vocab-empty">Chưa có từ vựng nào được thêm gần đây</span>
+          </div>
+        </div>
+
+        <!-- Khung danh sách từ vựng đã đồng bộ Neon SQL -->
+        <div class="custom-vocab-summary" id="customVocabSummary">
+          <div class="custom-vocab-header">
+            <span>🌐 Đã lưu trên CSDL Neon SQL: <strong id="sqlVocabCount">0 từ</strong></span>
+            <span id="sqlSyncStatus" class="sql-status-badge">🟢 Đã kết nối</span>
+          </div>
+          <div id="allCustomVocabList" class="custom-vocab-tags">
+            <span style="color:var(--muted);font-size:0.8rem;font-style:italic;">Đang tải danh sách...</span>
           </div>
         </div>
       </div>
@@ -1300,13 +1364,17 @@
     const viMeaningInput = document.getElementById('viMeaningInput');
     const modalMsg = document.getElementById('modalMsg');
 
+    function escapeHtml(str) {
+      return (str || '').toString().replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
     function updateLastVocabDisplay(word, meaning) {
       const container = document.getElementById('lastVocabText');
       if (!container) return;
       if (word && meaning) {
         container.innerHTML = `
           <div class="last-vocab-item">
-            <div><span class="last-vocab-en">${word}</span> <span style="opacity:0.7;">—</span> <span class="last-vocab-vi">${meaning}</span></div>
+            <div><span class="last-vocab-en">${escapeHtml(word)}</span> <span style="opacity:0.7;">—</span> <span class="last-vocab-vi">${escapeHtml(meaning)}</span></div>
             <span style="font-size:0.75rem;color:var(--yellow);font-weight:700;">Vừa thêm</span>
           </div>
         `;
@@ -1315,18 +1383,55 @@
       }
     }
 
+    function updateCustomVocabListUI(items) {
+      const listEl = document.getElementById('allCustomVocabList');
+      const countEl = document.getElementById('sqlVocabCount');
+      if (!items) {
+        try {
+          items = JSON.parse(localStorage.getItem('custom_vocabularies') || '[]');
+        } catch (e) {
+          items = [];
+        }
+      }
+      if (countEl) {
+        countEl.textContent = (items ? items.length : 0) + ' từ';
+      }
+      if (listEl) {
+        if (!items || items.length === 0) {
+          listEl.innerHTML = '<span style="color:var(--muted);font-size:0.8rem;font-style:italic;">Chưa có từ vựng mới nào trong CSDL</span>';
+        } else {
+          listEl.innerHTML = items.map((item, idx) => `
+            <div class="vocab-badge-item">
+              <span><strong>${idx + 1}. ${escapeHtml(item.word)}</strong>: ${escapeHtml(item.meaning)}</span>
+            </div>
+          `).join('');
+        }
+      }
+    }
+
     function showAddModal() {
       addModal.style.display = 'flex';
       modalMsg.textContent = '';
       enWordInput.value = '';
       viMeaningInput.value = '';
-      // Tải từ vựng gần nhất từ localStorage nếu có
+      // Hiển thị danh sách từ đã lưu
       try {
         const localList = JSON.parse(localStorage.getItem('custom_vocabularies') || '[]');
         if (localList.length > 0) {
-          updateLastVocabDisplay(localList[0].word, localList[0].meaning);
+          updateLastVocabDisplay(localList[localList.length - 1].word, localList[localList.length - 1].meaning);
         }
+        updateCustomVocabListUI(localList);
       } catch (e) {}
+
+      // Tải ngầm danh sách mới nhất từ Neon SQL
+      executeNeonSql('SELECT id, word, meaning FROM vocabularies ORDER BY id ASC;').then(neonRows => {
+        if (Array.isArray(neonRows) && neonRows.length > 0) {
+          updateCustomVocabListUI(neonRows);
+          const last = neonRows[neonRows.length - 1];
+          if (last) updateLastVocabDisplay(last.word, last.meaning);
+        }
+      }).catch(() => {});
+
       setTimeout(() => enWordInput.focus(), 100);
     }
 
@@ -1359,35 +1464,32 @@
         return;
       }
 
+      const isDuplicate = BASE_QUESTIONS.some(q => q.word.toLowerCase() === enWord.toLowerCase());
+      if (isDuplicate) {
+        modalMsg.style.color = '#f4c531';
+        modalMsg.textContent = '⚠ Từ vựng này đã có trong danh sách!';
+        return;
+      }
+
       saveVocabBtn.disabled = true;
-      saveVocabBtn.textContent = 'Đang lưu...';
+      saveVocabBtn.textContent = 'Đang lưu vào SQL...';
 
-      // Tạo câu hỏi và thêm vào CUỐI CÙNG của đề thi
-      const newQ = createQuestionForWord(enWord, viMeaning);
-      newQ.isNew = true;
-      MEANING_TO_WORD[viMeaning] = enWord;
-      BASE_QUESTIONS.push(newQ);
-      QUESTIONS.push(newQ);
-      answers.push(null);
-
-      scoreLabel.textContent = 'Điểm: ' + grade() + '/' + QUESTIONS.length;
-      updateProgress();
-      render();
-
-      // Cập nhật hiển thị từ vựng vừa thêm trong modal
-      updateLastVocabDisplay(enWord, viMeaning);
-
-      // 1. Lưu trực tiếp vào Neon PostgreSQL để MỌI THIẾT BỊ (Điện thoại, PC khác) đều nhận ngay lập tức!
-      executeNeonSql(
-        `INSERT INTO vocabularies (word, meaning) VALUES ('${escapeSql(enWord)}', '${escapeSql(viMeaning)}') RETURNING id, word, meaning;`
-      );
-
-      // 2. Lưu dự phòng vào localStorage
+      // 1. Lưu trực tiếp vào Neon PostgreSQL để MỌI THIẾT BỊ đều đồng bộ ngay lập tức!
       try {
-        const localList = JSON.parse(localStorage.getItem('custom_vocabularies') || '[]');
-        if (!localList.some(item => item.word.toLowerCase() === enWord.toLowerCase())) {
-          localList.unshift({ word: enWord, meaning: viMeaning });
-          localStorage.setItem('custom_vocabularies', JSON.stringify(localList));
+        await executeNeonSql(
+          `INSERT INTO vocabularies (word, meaning) VALUES ('${escapeSql(enWord)}', '${escapeSql(viMeaning)}') RETURNING id, word, meaning;`
+        );
+      } catch (err) {
+        console.warn('Neon SQL save error:', err);
+      }
+
+      // 2. Lưu vào localStorage làm bộ nhớ đệm
+      let currentLocalList = [];
+      try {
+        currentLocalList = JSON.parse(localStorage.getItem('custom_vocabularies') || '[]');
+        if (!currentLocalList.some(item => item.word.toLowerCase() === enWord.toLowerCase())) {
+          currentLocalList.push({ word: enWord, meaning: viMeaning });
+          localStorage.setItem('custom_vocabularies', JSON.stringify(currentLocalList));
         }
       } catch (e) {}
 
@@ -1400,8 +1502,23 @@
         }).catch(() => {});
       } catch (e) {}
 
+      // 4. Tạo câu hỏi và thêm vào đề thi
+      const newQ = createQuestionForWord(enWord, viMeaning);
+      newQ.isNew = true;
+      MEANING_TO_WORD[viMeaning] = enWord;
+      BASE_QUESTIONS.push(newQ);
+      QUESTIONS.push(newQ);
+      answers.push(null);
+
+      scoreLabel.textContent = 'Điểm: ' + grade() + '/' + QUESTIONS.length;
+      updateProgress();
+      render();
+
+      updateLastVocabDisplay(enWord, viMeaning);
+      updateCustomVocabListUI(currentLocalList);
+
       modalMsg.style.color = '#3fae5a';
-      modalMsg.innerHTML = '✔ Đã thêm câu hỏi từ "<strong>' + enWord + '</strong>" vào bài thi & CSDL Neon!';
+      modalMsg.innerHTML = '✔ Đã lưu từ "<strong>' + escapeHtml(enWord) + '</strong>" & đồng bộ lên máy chủ Neon SQL!';
 
       saveVocabBtn.disabled = false;
       saveVocabBtn.textContent = 'Lưu từ vựng';
@@ -1433,45 +1550,56 @@
       let savedItems = [];
 
       // Bước 1: Tải toàn bộ từ vựng trực tiếp từ Neon PostgreSQL (Đồng bộ mọi thiết bị)
-      const neonRows = await executeNeonSql('SELECT id, word, meaning FROM vocabularies ORDER BY id ASC;');
-      if (neonRows && neonRows.length > 0) {
-        savedItems = neonRows;
+      try {
+        const neonRows = await executeNeonSql('SELECT id, word, meaning FROM vocabularies ORDER BY id ASC;');
+        if (Array.isArray(neonRows) && neonRows.length > 0) {
+          savedItems = neonRows;
+        }
+      } catch (e) {
+        console.warn('Lỗi tải từ Neon SQL:', e);
       }
 
-      // Bước 2: Tải thêm từ backend API nếu chạy qua Node.js
+      // Bước 2: Tải thêm từ backend API nếu chạy qua Node.js (dự phòng)
       if (savedItems.length === 0) {
         try {
           const res = await fetch('/api/vocabularies');
           if (res.ok) {
             const json = await res.json();
-            if (json.success && Array.isArray(json.data)) {
+            if (json.success && Array.isArray(json.data) && json.data.length > 0) {
               savedItems = json.data;
             }
           }
         } catch (e) {}
       }
 
-      // Bước 3: Tự động tải từ localStorage của máy này và đồng bộ lên Neon nếu Neon chưa có
+      // Bước 3: Tự động tải từ localStorage của thiết bị này và ĐỒNG BỘ NGAY LÊN NEON NẾU NEON CHƯA CÓ
       try {
         const localList = JSON.parse(localStorage.getItem('custom_vocabularies') || '[]');
-        if (localList && localList.length > 0) {
+        if (Array.isArray(localList) && localList.length > 0) {
           for (const item of localList) {
-            if (!savedItems.some(s => s.word.toLowerCase() === item.word.toLowerCase())) {
+            if (item && item.word && !savedItems.some(s => s.word.toLowerCase() === item.word.toLowerCase())) {
               savedItems.push(item);
-              // Đồng bộ từ của máy tính này lên Neon để điện thoại cũng thấy ngay!
-              executeNeonSql(
-                `INSERT INTO vocabularies (word, meaning) VALUES ('${escapeSql(item.word)}', '${escapeSql(item.meaning)}');`
-              );
+              // Đồng bộ từ vựng từ thiết bị này lên Neon PostgreSQL để máy/điện thoại người khác thấy ngay!
+              try {
+                await executeNeonSql(
+                  `INSERT INTO vocabularies (word, meaning) VALUES ('${escapeSql(item.word)}', '${escapeSql(item.meaning)}');`
+                );
+              } catch (e) {}
             }
           }
         }
+      } catch (e) {}
+
+      // Cập nhật lại localStorage với toàn bộ danh sách đã đồng bộ
+      try {
+        localStorage.setItem('custom_vocabularies', JSON.stringify(savedItems));
       } catch (e) {}
 
       // Bước 4: Đưa tất cả từ vựng mới vào danh sách câu hỏi trắc nghiệm
       if (savedItems.length > 0) {
         let added = false;
         savedItems.forEach(v => {
-          if (!BASE_QUESTIONS.some(q => q.word.toLowerCase() === v.word.toLowerCase())) {
+          if (v && v.word && !BASE_QUESTIONS.some(q => q.word.toLowerCase() === v.word.toLowerCase())) {
             const newQ = createQuestionForWord(v.word, v.meaning);
             newQ.isNew = true;
             BASE_QUESTIONS.push(newQ);
@@ -1479,15 +1607,32 @@
             added = true;
           }
         });
+
         if (added) {
-          QUESTIONS = buildShuffledQuestions();
-          answers = new Array(QUESTIONS.length).fill(null);
-          scoreLabel.textContent = 'Điểm: 0/' + QUESTIONS.length;
+          const hasUserStarted = answers.some(a => a !== null);
+          if (!hasUserStarted && !submitted) {
+            QUESTIONS = buildShuffledQuestions();
+            answers = new Array(QUESTIONS.length).fill(null);
+          } else {
+            savedItems.forEach(v => {
+              if (!QUESTIONS.some(q => q.word.toLowerCase() === v.word.toLowerCase())) {
+                const newQ = createQuestionForWord(v.word, v.meaning);
+                newQ.isNew = true;
+                QUESTIONS.push(newQ);
+                answers.push(null);
+              }
+            });
+          }
+          scoreLabel.textContent = 'Điểm: ' + grade() + '/' + QUESTIONS.length;
           updateProgress();
           render();
         }
+
         const last = savedItems[savedItems.length - 1];
-        updateLastVocabDisplay(last.word, last.meaning);
+        if (last) {
+          updateLastVocabDisplay(last.word, last.meaning);
+        }
+        updateCustomVocabListUI(savedItems);
       }
     }
     loadSavedVocabularies();
